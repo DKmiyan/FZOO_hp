@@ -1,3 +1,3 @@
-# DEADiff
+# FZOO
 
-This is the project page for CVPR 2024 paper "DEADiff: An Efficient Stylization Diffusion Model with Disentangled Representations".
+This is the project page for  paper "FZOO: Fast Zeroth-Order Optimizer for Fine‑Tuning Large Language Models towards Adam‑Scale Speed".
