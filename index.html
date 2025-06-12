@@ -10,6 +10,16 @@
   <title>FZOO: Fast Zeroth-Order Optimizer for Fine‑Tuning Large Language Models towards Adam‑Scale Speed</title>
 
   <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],   // 支持 $...$ 行内公式
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -160,30 +170,69 @@
     <div class="hero-body">
       <div class="container is-max-desktop">
         <div class="columns is-centered has-text-centered">
-          <div class="column is-">
+          <div class="column">
             <h2 class="title is-2">Method</h2>
             <div class="columns is-centered has-text-justified">
               <td colspan="3">
                 <img src="static/images/FZOO_algnew.png" alt="" width="700" />
               </td>
             </div>
-            <!-- <div class="content has-text-justified">
-              <td colspan="3">
-                <p>
-                  <b>符号说明:</b> 
-                </p>
-                <p>
-                  <b>参数更新公式:</b> 
-                </p>
-                <p>
-                  <b>并行优化:</b> 
-                </p>
-
-              </td>
-            </div> -->
+            <div class="content has-text-justified">
+              <h3 class="title is-4">Notation</h3>
+              <p>
+                Let $\mathcal{D} = \{(x_i, y_i)\}_{i=1}^{|\mathcal{D}|}$ denote the labeled dataset, and $\mathcal{B} \subset \mathcal{D}$ be a mini-batch of size $B$. The trainable model parameters are denoted as $\theta \in \mathbb{R}^d$, and the empirical loss on $\mathcal{B}$ is $L(\theta; \mathcal{B})$.
+              </p>
+              <h3 class="title is-4">Gradient Estimation and Parameter Update</h3>
+              <p>
+                <b>Classical Zeroth-Order (ZO) Gradient Estimation:</b>
+                <br>
+                $$
+                \hat{\nabla} L(\theta; \mathcal{B}) = \frac{L(\theta+\epsilon z; \mathcal{B}) - L(\theta-\epsilon z; \mathcal{B})}{2\epsilon} z
+                $$
+                where $z \sim \mathcal{N}(0, I_d)$. Averaging over $N$ i.i.d. samples gives the $n$-ZO estimator:
+                $$
+                \hat{\nabla}_N L = \frac{1}{N} \sum_{i=1}^N \hat{\nabla}_i L
+                $$
+                <br>
+                <b>FZOO One-sided Estimation and Adaptive Step Size:</b>
+                <br>
+                $$
+                g_t = \frac{1}{\epsilon N} \sum_{i=1}^N (l_i - l_0) u_i
+                $$
+                $$
+                \sigma_t^2 = \frac{1}{N-1} \sum_{i=1}^N \left(l_i - \frac{1}{N} \sum_{j=1}^N l_j \right)^2
+                $$
+                $$
+                \theta_{t+1} = \theta_t - \eta_t \frac{g_t}{\sigma_t}
+                $$
+                where $u_i \in \{\pm 1\}^d$ are Rademacher random vectors, $l_0 = L(\theta_t; \mathcal{B}_t)$, and $l_i = L(\theta_t + \epsilon u_i; \mathcal{B}_t)$.
+              </p>
+              <h3 class="title is-4">Efficient Batched Forward Implementation</h3>
+              <p>
+                The original ZO pipeline runs separate forward passes for each perturbation, limiting computational efficiency. FZOO leverages Rademacher vectors and CUDA kernel fusion for faster computation. For the first layer:
+                $$
+                F^{(1)} = W^{(1)}X, \quad Y^{(1)}_i = F^{(1)} + \epsilon (u_i \odot X), \quad i=1,\dots,N
+                $$
+                For subsequent layers ($j \geq 2$):
+                $$
+                F^{(j)} = W^{(j)} Y^{(j-1)}, \quad P^{(j)} = \epsilon (U \odot Y^{(j-1)}), \quad Y^{(j)} = F^{(j)} + P^{(j)}
+                $$
+                where $U = \mathrm{diag}(u_1, \dots, u_N)$ is the block-diagonal sign matrix. By fusing $N$ matrix multiplications into a single CUDA kernel, the wall-clock time is reduced by a factor $p$.
+                <br>
+                The overall speed-up achieved by FZOO is:
+                $$
+                \boxed{\,f \times \min(s, r)\,}
+                $$
+                where $f$ is the gain from one-sided estimation, $r$ is the number of parallel perturbations, and $s$ is the CUDA kernel fusion speedup. On OPT-125M with $N=8$, our batched scheme delivers a $1.92 \times$ speed-up over the standard “8 perturbations + 8 forward passes” baseline.
+              </p>
+            </div>
             <p><br></p>
           </div>
+        </div>
+      </div>
+    </div>
   </section>
+  
   <!--End paper poster -->
 
 
@@ -242,11 +291,11 @@
 
 
   <!-- Video grid Extension -->
-  <section class="section hero is-small">
+  <section class="section hero is-small is-light">
     <div class="hero-body">
       <div class="container is-max-desktop">
-        <h2 class="title is-2 has-text-centered"> Applications</h2>
-        <h2 class="title is-4 has-text-centered"><b style="color:#008AD7; font-weight:normal">&#x25B6 </b> Stylized Text-to-Image Generation</h2>
+        <h2 class="title is-2 has-text-centered"> Results</h2>
+        <h2 class="title is-4 has-text-centered"><b style="color:#008AD7; font-weight:normal">&#x25B6 </b> Comparison of loss curves for different models and different tasks</h2>
         <div id="results-carousel-more" class="carousel results-carousel">
   
           <div class="item item-puppet">
